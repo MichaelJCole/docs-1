@@ -5,11 +5,15 @@ description: Static Hosting on AWS with S3 and Cloudfront
 
 # How to Deploy on AWS w/ S3 and Cloudfront
 
-AWS is Amazon Web Services.  
-S3 is their static storage which can be configured for Static Site Hosting.
-Cloudfront is their CDN (content delivery network)
+Hosting a static site generated with Nuxt on AWS w/ S3 + Cloudfront is powerful and cheap.
 
-Hosting a **static generated** Nuxt app on AWS w/ S3 + Cloudfront is powerful and cheap.
+This guide will show how to deploy a static website with HTTPS and a CDN.  This is a cheap ($0.50/month), performant, and secure (no server process to hack) way to host a website.
+
+- "Static site" means the site has no backend process.
+- AWS is Amazon Web Services. 
+- S3 is AWS' static storage service.  This is where we push the HTML/CSS/JS files.
+- Cloudfront is AWS' CDN (content delivery network).  This is where we configure HTTPS/SSL.
+
 
 > AWS is a death by 1000 paper cuts.  If we missed a step, please submit a PR to update this document.
 
@@ -22,9 +26,9 @@ We'll host super cheap with some AWS services.  Briefly:
    - can be configured to host static websites
  - CloudFront 
    - a CDN (content delivery network)
+   - speeds up site loading times
    - offers free HTTPS certs
-   - Makes your site load faster
-
+   
 We'll push the site like this:
 
 ```
