@@ -9,47 +9,59 @@ Hosting a static site generated with Nuxt on AWS w/ S3 + Cloudfront is powerful 
 
 This guide will show how to deploy a static website with HTTPS and a CDN.  This is a cheap ($0.50/month), performant, and secure (no server process to hack) way to host a website.
 
-- "Static site" means the site has no backend process.
-- AWS is Amazon Web Services. 
-- S3 is AWS' static storage service.  This is where we push the HTML/CSS/JS files.
-- Cloudfront is AWS' CDN (content delivery network).  This is where we configure HTTPS/SSL.
+- [Static site](https://en.wikipedia.org/wiki/Static_web_page) means a site that is delivered as it's stored.  A dynamic site has a custom backend server process.
+- AWS is [Amazon Web Services](https://aws.amazon.com/). 
+- S3 is AWS' [Simple Storage Service](https://aws.amazon.com/s3/).  This is where we store the HTML/CSS/JS files.
+- [Cloudfront](https://aws.amazon.com/cloudfront/) is AWS' CDN (content delivery network).  This is where we configure HTTPS/SSL.
 
 
 > AWS is a death by 1000 paper cuts.  If we missed a step, please submit a PR to update this document.
 
 ## Overview
 
-We'll host super cheap with some AWS services.  Briefly:
+Briefly, we'll host our site like this:
 
+ - Laptop
+   - `nuxt generate` creates HTML/CSS/JS files
  - S3 
    - cloud data "bucket" for our website files
    - can be configured to host static websites
+   - we push the HTML/CSS/JS files here
  - CloudFront 
    - a CDN (content delivery network)
-   - speeds up site loading times
+   - caches content globally to speed up site loading times
    - offers free HTTPS certs
+   - reads content from S3 bucket
    
 We'll push the site like this:
 
 ```
 Nuxt Generate -> Local folder -> AWS S3 Bucket -> AWS Cloudfront CDN -> Browser
-  [      nuxt generate       ]    [         gulp deploy          ]
-  [                         deploy.sh                            ]
+  [   `nuxt generate`    ][             `gulp deploy`              ]
+  [                         `deploy.sh`                            ]
 ```
 
 First, we'll generate the site with `nuxt generate`.
 Then, we'll use [Gulp](https://gulpjs.com/) to publish the files to a S3 bucket and invalidate a CloudFront CDN.
+
+#### Packages
+
+We'll use these NPM packages:
 
   - [gulp](https://www.npmjs.com/package/gulp)
   - [gulp-awspublish](https://www.npmjs.com/package/gulp-awspublish)
   - [gulp-cloudfront-invalidate-aws-publish](https://www.npmjs.com/package/gulp-cloudfront-invalidate-aws-publish)
   - [concurrent-transform](https://www.npmjs.com/package/concurrent-transform) (for parallel uploads)
 
+#### Configuration
+
 Our deploy script needs these environment variables set:
   - AWS_BUCKET_NAME="example.com" 
   - AWS_CLOUDFRONT="UPPERCASE"
   - AWS_ACCESS_KEY_ID="key" 
   - AWS_SECRET_ACCESS_KEY="secret" 
+
+#### Code
 
 We'll have these files: 
 
@@ -70,14 +82,14 @@ gulpfile.js     -  `gulp deploy` code to push files to S3 and invalidate CloudFr
 
 For steps 1. and 2, follow this [tutorial to setup your S3 and CloudFront](https://reidweb.com/2017/02/06/cloudfront-cdn-tutorial/)
 
-You should now have this data:
+You should now have this configuration data:
   - AWS_BUCKET_NAME="example.com" 
   - AWS_CLOUDFRONT="UPPERCASE"
 
 ### 3. AWS: Configure security access
 
-For step 3, we need to create a user that can:
-  - Update the bucket contents
+For step 3, we need to create an AWS user that can:
+  - Update the S3 bucket contents
   - Invalidate the CloudFront distribution (propagates changes to users faster)
 
 [Create a programmatic user with this policy](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users_create.html):
@@ -123,9 +135,16 @@ For step 3, we need to create a user that can:
 
 Then [get an access key and secret](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html).
 
-You should now have this data:
+You should now also have this configuration data:
+
   - AWS_ACCESS_KEY_ID="key" 
   - AWS_SECRET_ACCESS_KEY="secret" 
+
+Along with this from the previous step:
+
+  - AWS_BUCKET_NAME="example.com" 
+  - AWS_CLOUDFRONT="UPPERCASE"
+
 
 ### 4. Laptop: Setup your project's build script
 
@@ -144,8 +163,19 @@ export AWS_CLOUDFRONT="UPPERCASE"
 [ ! -d "node_modules" ] && npm install
 
 npm run generate
-gulp deploy
+npm run deploy
 ```
+
+Now, check your `package.json` has these `scripts`
+
+```
+"scripts": {
+  "generate": "nuxt generate",
+  ...
+  "deploy": "gulp deploy"
+},
+```
+
 
 4.2) Make `deploy.sh` runnable and DON'T CHECK INTO GIT (deploy.sh has secrets in it)
 ``` bash
